@@ -1,0 +1,16 @@
+{
+    "name": "Axe_crawler",
+    "version": "0.0.1",
+    "description": "axe training crawler",
+    "author": "Hoskiss Lin",
+
+    "dependencies": {
+        "cheerio": "*",
+        "bluebird": "*",
+        "iconv-lite": "*",
+        "collections": "*",
+        "bufferhelper": "*"
+    }
+}
+
+
