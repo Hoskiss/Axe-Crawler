@@ -37,15 +37,6 @@ function requestPromise(options) {
     });
 }
 
-function parseEveryElems(raw_page) {
-    var every_elems = [];
-    var every_elems_pattern = 'td';
-    $(raw_page).find(every_elems_pattern).each(function () {
-        every_elems.push($(this).text());
-    });
-
-    return every_elems;
-}
 
 function printOutAndSave(content) {
     console.log(content);
@@ -57,6 +48,16 @@ function printOutAndSave(content) {
             console.log("The file was saved!");
         }
     });
+}
+
+function parseEveryElems(raw_page) {
+    var every_elems = [];
+    var every_elems_pattern = 'td';
+    $(raw_page).find(every_elems_pattern).each(function () {
+        every_elems.push($(this).text());
+    });
+
+    return every_elems;
 }
 
 function transferElemsToJson(every_elems) {
