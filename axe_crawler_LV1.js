@@ -37,7 +37,6 @@ function requestPromise(options) {
     });
 }
 
-
 function printOutAndSave(content) {
     console.log(content);
 
