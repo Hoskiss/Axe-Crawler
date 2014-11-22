@@ -1,11 +1,13 @@
 var fs = require('fs'),
     $ = require('cheerio'),
     http = require('http'),
-    Promise = require('bluebird');
+    Promise = require('bluebird'),
+    request = require('request');
+    request = request.defaults({jar: true});
 
 var init_options = {
-    host: "axe-level-1.herokuapp.com",
-    path: "/lv2/",
+    host: "http://axe-level-1.herokuapp.com",
+    path: "/lv3/",
     method: 'GET'
 };
 
@@ -35,36 +37,23 @@ function requestPromise(req_options) {
         } else {
             reject("Error: Invalid request options " + req_options);
         }
-
-        var req = http.request(check_options, function(res) {
-            var output = '';
-
-            res.setEncoding('utf-8');
-            res.on('data', function (chunk) {
-                output += chunk;
-            });
-
-            res.on('end', function () {
-                if(200 === res.statusCode) {
-                    resolve(output);
+        request(
+            check_options.host+check_options.path,
+            function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    resolve(body);
                 } else {
-                    reject("Error network response: " + res.statusCode);
+                    reject("Error network response: " + response.statusCode);
                 }
-            });
-        });
-
-        req.on('error', function(err) {
-            reject("Error: " + err.message);
-        });
-
-        req.end();
+            }
+        );
     });
 }
 
 function printOutAndSave(content) {
     console.log(content);
 
-    fs.writeFile("./axe_lv2_output.json", content, function(err) {
+    fs.writeFile("./axe_lv3_output.json", content, function(err) {
         if(err) {
             console.log(err);
         } else {
@@ -73,43 +62,13 @@ function printOutAndSave(content) {
     });
 }
 
-function parseEveryPageLinks(home_page) {
-    var every_links = [];
-    var every_link_pattern = 'a[href^="?page="]';
-    $(home_page).find(every_link_pattern).each(function () {
-        every_links.push($(this).attr('href'));
-    });
-
-    return every_links;
-}
-
 function parseEveryElems(raw_page) {
-    var total_elems = this.total_elems;
-
     var total_elems_pattern = 'td';
     $(raw_page).find(total_elems_pattern).each(function () {
         total_elems.push($(this).text());
     });
 
-    // or not need to return, following used this.total_elems
     return total_elems;
-}
-
-function parseElemsFromLinksInOrder(every_links) {
-    var this_total_elems = this.total_elems;
-
-    return every_links.map(requestPromise).reduce(
-        function(sequence, current_promise) {
-            return sequence.then(
-                function() {
-                    return current_promise;
-                }
-            ).bind({
-                total_elems: this_total_elems
-            }).then(
-                parseEveryElems
-            );
-        }, Promise.resolve());
 }
 
 function transferElemsToJson(total_elems) {
@@ -128,13 +87,22 @@ function transferElemsToJson(total_elems) {
     return JSON.stringify(json_format);
 }
 
-requestPromise(init_options).then(
-    parseEveryPageLinks
-// we need a single container to save results
-).bind({
-    total_elems: []
-}).then(
-    parseElemsFromLinksInOrder
+var path_list = [""];
+for (var index = 1; index < 76; index++) {
+    path_list.push("?page=next");
+}
+
+var total_elems = [];
+path_list.reduce(
+    function(sequence, path_option) {
+        return sequence.then(
+            function() {
+                return requestPromise(path_option);
+            }).then(
+                parseEveryElems
+            );
+    },
+    Promise.resolve()
 ).then(
     transferElemsToJson
 ).then(
@@ -142,3 +110,10 @@ requestPromise(init_options).then(
 ).catch(function(err) {
     console.log(err);
 });
+
+
+
+
+
+
+
