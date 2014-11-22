@@ -76,7 +76,7 @@ function printOutAndSave(content) {
     });
 }
 
-function parseEveryLinks(home_page) {
+function parseEveryPageLinks(home_page) {
     var every_links = [];
     var every_link_pattern = 'a[href^="?page="]';
     $(home_page).find(every_link_pattern).each(function () {
@@ -86,41 +86,44 @@ function parseEveryLinks(home_page) {
     return every_links;
 }
 
-var every_elems = [];
-
 function parseEveryElems(raw_page) {
-    var every_elems_pattern = 'td';
-    $(raw_page).find(every_elems_pattern).each(function () {
-        every_elems.push($(this).text());
+    var total_elems = this.total_elems;
+
+    var total_elems_pattern = 'td';
+    $(raw_page).find(total_elems_pattern).each(function () {
+        total_elems.push($(this).text());
     });
 
-    // or not need to return
-    return every_elems;
+    // or not need to return, following used this.total_elems
+    return total_elems;
 }
 
+function parseElemsFromLinksInOrder(every_links) {
+    var this_total_elems = this.total_elems;
 
-function grepElemsFromLinksInOrder(every_links) {
     return every_links.map(requestPromise).reduce(
         function(sequence, current_promise) {
             return sequence.then(
                 function() {
                     return current_promise;
                 }
-            ).then(
+            ).bind({
+                total_elems: this_total_elems
+            }).then(
                 parseEveryElems
             );
         }, Promise.resolve());
 }
 
-function transferElemsToJson(every_elems) {
+function transferElemsToJson(total_elems) {
     var json_format = [];
-    var elems_num = every_elems.length;
+    var elems_num = total_elems.length;
     for (var person_index = 1; person_index < elems_num/3; person_index++) {
-        if ("鄉鎮" !== every_elems[3*person_index]) {
+        if ("鄉鎮" !== total_elems[3*person_index]) {
             var each_person = {};
-            each_person["town"] = every_elems[3*person_index];
-            each_person["village"] = every_elems[3*person_index+1];
-            each_person["name"] = every_elems[3*person_index+2];
+            each_person["town"] = total_elems[3*person_index];
+            each_person["village"] = total_elems[3*person_index+1];
+            each_person["name"] = total_elems[3*person_index+2];
 
             json_format.push(each_person);
         }
@@ -129,9 +132,11 @@ function transferElemsToJson(every_elems) {
 }
 
 requestPromise(init_options).then(
-    parseEveryLinks
-).then(
-    grepElemsFromLinksInOrder
+    parseEveryPageLinks
+).bind({
+    total_elems: []
+}).then(
+    parseElemsFromLinksInOrder
 ).then(
     transferElemsToJson
 ).then(
