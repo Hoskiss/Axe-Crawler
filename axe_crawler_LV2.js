@@ -133,6 +133,7 @@ function transferElemsToJson(total_elems) {
 
 requestPromise(init_options).then(
     parseEveryPageLinks
+// we need a single container to save results
 ).bind({
     total_elems: []
 }).then(
