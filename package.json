@@ -9,7 +9,8 @@
         "bluebird": "*",
         "iconv-lite": "*",
         "collections": "*",
-        "bufferhelper": "*"
+        "bufferhelper": "*",
+        "request": "*"
     }
 }
 
